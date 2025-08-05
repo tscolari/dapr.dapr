@@ -77,10 +77,12 @@ type Actors struct {
 
 	orchestrationWorkItemChan chan *backend.OrchestrationWorkItem
 	activityWorkItemChan      chan *backend.ActivityWorkItem
+
+	burstBuffer *burstBuffer
 }
 
 func New(opts Options) *Actors {
-	return &Actors{
+	actors := Actors{
 		appID:                     opts.AppID,
 		workflowActorType:         ActorTypePrefix + opts.Namespace + utils.DotDelimiter + opts.AppID + utils.DotDelimiter + WorkflowNameLabelKey,
 		activityActorType:         ActorTypePrefix + opts.Namespace + utils.DotDelimiter + opts.AppID + utils.DotDelimiter + ActivityNameLabelKey,
@@ -90,7 +92,22 @@ func New(opts Options) *Actors {
 		orchestrationWorkItemChan: make(chan *backend.OrchestrationWorkItem, 1),
 		activityWorkItemChan:      make(chan *backend.ActivityWorkItem, 1),
 		eventSink:                 opts.EventSink,
+
+		// This sets the size of the burst buffer,
+		// exceeding this will cause requests to block.
+		burstBuffer: NewBurstBuffer(100 * 1000),
 	}
+
+	// This sets the constant rate that the burst buffer will be drained
+	// (aka have the workflows actually set to run).
+	errChan := actors.burstBuffer.Workers(5, actors.createOrchestrationInstance)
+	go func() {
+		for err := range errChan {
+			fmt.Println("Error in burst buffer worker:", err)
+		}
+	}()
+
+	return &actors
 }
 
 func (abe *Actors) RegisterActors(ctx context.Context) error {
@@ -205,6 +222,11 @@ func (abe *Actors) CreateOrchestrationInstance(ctx context.Context, e *backend.H
 		return fmt.Errorf("failed to marshal CreateWorkflowInstanceRequest: %w", err)
 	}
 
+	abe.burstBuffer.Add(workflowInstanceID, requestBytes)
+	return nil
+}
+
+func (abe *Actors) createOrchestrationInstance(ctx context.Context, workflowInstanceID string, requestBytes []byte) error {
 	// Invoke the well-known workflow actor directly, which will be created by this invocation request.
 	// Note that this request goes directly to the actor runtime, bypassing the API layer.
 	req := internalsv1pb.NewInternalInvokeRequest(todo.CreateWorkflowInstanceMethod).
@@ -461,7 +483,8 @@ func (abe *Actors) Start(ctx context.Context) error {
 }
 
 // Stop implements backend.Backend
-func (*Actors) Stop(context.Context) error {
+func (abe *Actors) Stop(context.Context) error {
+	abe.burstBuffer.Stop()
 	return nil
 }
 
