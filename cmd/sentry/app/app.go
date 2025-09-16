@@ -139,6 +139,7 @@ func Run() {
 	cfg.Port = opts.Port
 	cfg.ListenAddress = opts.ListenAddress
 	cfg.Mode = modes.DaprMode(opts.Mode)
+	cfg.OverrideSchedulerHostnames = opts.OverrideSchedulerHostnames
 
 	if opts.JWT.Issuer != nil {
 		cfg.JWT.Issuer = opts.JWT.Issuer

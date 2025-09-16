@@ -126,15 +126,16 @@ func New(ctx context.Context, opts Options) (CertificateAuthority, error) {
 	runners := concurrency.NewRunnerManager(
 		sec.Run,
 		server.New(server.Options{
-			Port:             opts.Config.Port,
-			Security:         sec,
-			Validators:       vals,
-			DefaultValidator: opts.Config.DefaultValidator,
-			CA:               camngr,
-			Healthz:          opts.Healthz,
-			ListenAddress:    opts.Config.ListenAddress,
-			JWTEnabled:       opts.Config.JWT.Enabled,
-			JWTTTL:           opts.Config.JWT.TTL,
+			Port:                       opts.Config.Port,
+			Security:                   sec,
+			Validators:                 vals,
+			DefaultValidator:           opts.Config.DefaultValidator,
+			CA:                         camngr,
+			Healthz:                    opts.Healthz,
+			ListenAddress:              opts.Config.ListenAddress,
+			JWTEnabled:                 opts.Config.JWT.Enabled,
+			JWTTTL:                     opts.Config.JWT.TTL,
+			OverrideSchedulerHostnames: opts.Config.OverrideSchedulerHostnames,
 		}).Start,
 	)
 

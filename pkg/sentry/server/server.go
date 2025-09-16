@@ -68,32 +68,37 @@ type Options struct {
 
 	// JWTTTL is the time to live for the JWT token.
 	JWTTTL time.Duration
+
+	// OverrideSchedulerHostnames is a list of hostnames to use for the dapr-scheduler service
+	OverrideSchedulerHostnames []string
 }
 
 // Server is the gRPC server for the Sentry service.
 type Server struct {
-	port             int
-	listenAddress    string
-	sec              security.Provider
-	vals             map[sentryv1pb.SignCertificateRequest_TokenValidator]validator.Validator
-	defaultValidator sentryv1pb.SignCertificateRequest_TokenValidator
-	ca               ca.Signer
-	htarget          healthz.Target
-	jwtEnabled       bool
-	jwtTTL           time.Duration
+	port                       int
+	listenAddress              string
+	sec                        security.Provider
+	vals                       map[sentryv1pb.SignCertificateRequest_TokenValidator]validator.Validator
+	defaultValidator           sentryv1pb.SignCertificateRequest_TokenValidator
+	ca                         ca.Signer
+	htarget                    healthz.Target
+	jwtEnabled                 bool
+	jwtTTL                     time.Duration
+	overrideSchedulerHostnames []string
 }
 
 func New(opts Options) *Server {
 	return &Server{
-		port:             opts.Port,
-		listenAddress:    opts.ListenAddress,
-		sec:              opts.Security,
-		vals:             opts.Validators,
-		defaultValidator: opts.DefaultValidator,
-		ca:               opts.CA,
-		htarget:          opts.Healthz.AddTarget("sentry-server"),
-		jwtEnabled:       opts.JWTEnabled,
-		jwtTTL:           opts.JWTTTL,
+		port:                       opts.Port,
+		listenAddress:              opts.ListenAddress,
+		sec:                        opts.Security,
+		vals:                       opts.Validators,
+		defaultValidator:           opts.DefaultValidator,
+		ca:                         opts.CA,
+		htarget:                    opts.Healthz.AddTarget("sentry-server"),
+		jwtEnabled:                 opts.JWTEnabled,
+		jwtTTL:                     opts.JWTTTL,
+		overrideSchedulerHostnames: opts.OverrideSchedulerHostnames,
 	}
 }
 
@@ -198,10 +203,9 @@ func (s *Server) signCertificate(ctx context.Context, req *sentryv1pb.SignCertif
 	case req.GetNamespace() == security.CurrentNamespace() && req.GetId() == "dapr-operator":
 		dns = []string{fmt.Sprintf("dapr-webhook.%s.svc", req.GetNamespace())}
 	case req.GetNamespace() == security.CurrentNamespace() && req.GetId() == "dapr-scheduler":
-		dns = []string{
-			fmt.Sprintf("dapr-scheduler-server-0.dapr-scheduler-server.%s.svc.cluster.local", req.GetNamespace()),
-			fmt.Sprintf("dapr-scheduler-server-1.dapr-scheduler-server.%s.svc.cluster.local", req.GetNamespace()),
-			fmt.Sprintf("dapr-scheduler-server-2.dapr-scheduler-server.%s.svc.cluster.local", req.GetNamespace()),
+		dns = defaultSchedulerHostnames(req)
+		if len(s.overrideSchedulerHostnames) > 0 {
+			dns = s.overrideSchedulerHostnames
 		}
 	}
 
@@ -253,4 +257,12 @@ func (s *Server) signCertificate(ctx context.Context, req *sentryv1pb.SignCertif
 		ValidUntil:             timestamppb.New(chain[0].NotAfter),
 		Jwt:                    jwtToken,
 	}, nil
+}
+
+func defaultSchedulerHostnames(req *sentryv1pb.SignCertificateRequest) []string {
+	return []string{
+		fmt.Sprintf("dapr-scheduler-server-0.dapr-scheduler-server.%s.svc.cluster.local", req.GetNamespace()),
+		fmt.Sprintf("dapr-scheduler-server-1.dapr-scheduler-server.%s.svc.cluster.local", req.GetNamespace()),
+		fmt.Sprintf("dapr-scheduler-server-2.dapr-scheduler-server.%s.svc.cluster.local", req.GetNamespace()),
+	}
 }

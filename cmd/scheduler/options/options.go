@@ -64,6 +64,8 @@ type Options struct {
 	EtcdDefragThresholdMB          uint
 	EtcdInitialElectionTickAdvance bool
 	EtcdMetrics                    string
+	EtcdOverrideAllowedHostnames   []string
+	EtcdOverrideServerName         string
 
 	// TODO: @joshvanl: add Etcd client TLS enabled flag.
 	EtcdClientEndpoints []string
@@ -122,6 +124,8 @@ func New(origArgs []string) (*Options, error) {
 	fs.UintVar(&opts.EtcdDefragThresholdMB, "etcd-experimental-bootstrap-defrag-threshold-megabytes", 100, "Minimum number of megabytes needed to be freed for etcd to consider running defrag during bootstrap. Needs to be set to non-zero value to take effect.")
 	fs.BoolVar(&opts.EtcdInitialElectionTickAdvance, "etcd-initial-election-tick-advance", false, "Whether to fast-forward initial election ticks on boot for faster election. When it is true, then local member fast-forwards election ticks to speed up “initial” leader election trigger. This benefits the case of larger election ticks. Disabling this would slow down initial bootstrap process for cross datacenter deployments. Make your own tradeoffs by configuring this flag at the cost of slow initial bootstrap.")
 	fs.StringVar(&opts.EtcdMetrics, "etcd-metrics", "basic", "Level of detail for exported metrics, specify ’extensive’ to include histogram metrics.")
+	fs.StringSliceVar(&opts.EtcdOverrideAllowedHostnames, "etcd-override-allowed-hostnames", []string{}, "Manually configure the list of allowed hosts in the etcd ring.")
+	fs.StringVar(&opts.EtcdOverrideServerName, "etcd-override-server-name", "", "Set a custom FQDN for this server node")
 
 	fs.StringArrayVar(&opts.EtcdClientEndpoints, "etcd-client-endpoints", []string{}, "Comma-separated list of etcd client endpoints to connect to. Only used when --etcd-embed is false.")
 	fs.StringVar(&opts.EtcdClientUsername, "etcd-client-username", "", "Username for etcd client authentication. Only used when --etcd-embed is false.")

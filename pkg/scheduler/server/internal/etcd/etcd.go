@@ -51,6 +51,8 @@ type Options struct {
 	DefragThresholdMB          uint
 	InitialElectionTickAdvance bool
 	Metrics                    string
+	OverrideAllowedHostnames   []string
+	OverrideServerName         string
 
 	ClientEndpoints []string
 	ClientUsername  string

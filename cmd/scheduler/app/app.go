@@ -119,6 +119,8 @@ func Run() {
 				EtcdDefragThresholdMB:          opts.EtcdDefragThresholdMB,
 				EtcdInitialElectionTickAdvance: opts.EtcdInitialElectionTickAdvance,
 				EtcdMetrics:                    opts.EtcdMetrics,
+				EtcdOverrideAllowedHostnames:   opts.EtcdOverrideAllowedHostnames,
+				EtcdOverrideServerName:         opts.EtcdOverrideServerName,
 
 				EtcdClientEndpoints: opts.EtcdClientEndpoints,
 				EtcdClientUsername:  opts.EtcdClientUsername,

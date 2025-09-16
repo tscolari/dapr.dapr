@@ -66,20 +66,21 @@ const (
 
 // Config holds the configuration for the Certificate Authority.
 type Config struct {
-	Port             int
-	ListenAddress    string
-	TrustDomain      string
-	CAStore          string
-	WorkloadCertTTL  time.Duration
-	AllowedClockSkew time.Duration
-	RootCertPath     string
-	IssuerCertPath   string
-	IssuerKeyPath    string
-	JWT              ConfigJWT
-	Mode             modes.DaprMode
-	Validators       map[sentryv1pb.SignCertificateRequest_TokenValidator]map[string]string
-	DefaultValidator sentryv1pb.SignCertificateRequest_TokenValidator
-	Features         []daprGlobalConfig.FeatureSpec
+	Port                       int
+	ListenAddress              string
+	TrustDomain                string
+	CAStore                    string
+	WorkloadCertTTL            time.Duration
+	AllowedClockSkew           time.Duration
+	RootCertPath               string
+	IssuerCertPath             string
+	IssuerKeyPath              string
+	JWT                        ConfigJWT
+	Mode                       modes.DaprMode
+	Validators                 map[sentryv1pb.SignCertificateRequest_TokenValidator]map[string]string
+	DefaultValidator           sentryv1pb.SignCertificateRequest_TokenValidator
+	Features                   []daprGlobalConfig.FeatureSpec
+	OverrideSchedulerHostnames []string
 }
 
 type ConfigJWT struct {

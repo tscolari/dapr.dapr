@@ -64,6 +64,8 @@ type Options struct {
 	EtcdDefragThresholdMB          uint
 	EtcdInitialElectionTickAdvance bool
 	EtcdMetrics                    string
+	EtcdOverrideAllowedHostnames   []string
+	EtcdOverrideServerName         string
 
 	EtcdClientEndpoints []string
 	EtcdClientUsername  string
@@ -123,6 +125,8 @@ func New(opts Options) (*Server, error) {
 		DataDir:                    opts.EtcdDataDir,
 		Healthz:                    opts.Healthz,
 		Mode:                       opts.Mode,
+		OverrideServerName:         opts.EtcdOverrideServerName,
+		OverrideAllowedHostnames:   opts.EtcdOverrideAllowedHostnames,
 
 		ClientEndpoints: opts.EtcdClientEndpoints,
 		ClientUsername:  opts.EtcdClientUsername,

@@ -42,23 +42,29 @@ func config(opts Options) (*embed.Config, error) {
 	config.MaxRequestBytes = math.MaxInt32
 	config.ExperimentalWarningApplyDuration = time.Second * 5
 
+	allowedHostnames := opts.OverrideAllowedHostnames
+	if len(allowedHostnames) == 0 {
+		allowedHostnames = defaultAllowedHostnames(opts)
+	}
+
+	serverName := opts.OverrideServerName
+	if serverName == "" {
+		serverName = defaultServerName(opts)
+	}
+
 	if opts.Security.MTLSEnabled() {
 		info := transport.TLSInfo{
 			ClientCertAuth:      true,
 			InsecureSkipVerify:  false,
 			SkipClientSANVerify: false,
-			AllowedHostnames: []string{
-				fmt.Sprintf("dapr-scheduler-server-0.dapr-scheduler-server.%s.svc.cluster.local", opts.Security.ControlPlaneNamespace()),
-				fmt.Sprintf("dapr-scheduler-server-1.dapr-scheduler-server.%s.svc.cluster.local", opts.Security.ControlPlaneNamespace()),
-				fmt.Sprintf("dapr-scheduler-server-2.dapr-scheduler-server.%s.svc.cluster.local", opts.Security.ControlPlaneNamespace()),
-			},
-			EmptyCN:        true,
-			CertFile:       filepath.Join(*opts.Security.IdentityDir(), "cert.pem"),
-			KeyFile:        filepath.Join(*opts.Security.IdentityDir(), "key.pem"),
-			ClientCertFile: filepath.Join(*opts.Security.IdentityDir(), "cert.pem"),
-			ClientKeyFile:  filepath.Join(*opts.Security.IdentityDir(), "key.pem"),
-			TrustedCAFile:  filepath.Join(*opts.Security.IdentityDir(), "ca.pem"),
-			ServerName:     fmt.Sprintf("%s.dapr-scheduler-server.%s.svc.cluster.local", opts.Name, opts.Security.ControlPlaneNamespace()),
+			AllowedHostnames:    allowedHostnames,
+			EmptyCN:             true,
+			CertFile:            filepath.Join(*opts.Security.IdentityDir(), "cert.pem"),
+			KeyFile:             filepath.Join(*opts.Security.IdentityDir(), "key.pem"),
+			ClientCertFile:      filepath.Join(*opts.Security.IdentityDir(), "cert.pem"),
+			ClientKeyFile:       filepath.Join(*opts.Security.IdentityDir(), "key.pem"),
+			TrustedCAFile:       filepath.Join(*opts.Security.IdentityDir(), "ca.pem"),
+			ServerName:          serverName,
 		}
 
 		b, err := os.ReadFile(filepath.Join(*opts.Security.IdentityDir(), "cert.pem"))
@@ -144,6 +150,18 @@ func config(opts Options) (*embed.Config, error) {
 	config.Metrics = opts.Metrics
 
 	return config, nil
+}
+
+func defaultAllowedHostnames(opts Options) []string {
+	return []string{
+		fmt.Sprintf("dapr-scheduler-server-0.dapr-scheduler-server.%s.svc", opts.Security.ControlPlaneNamespace()),
+		fmt.Sprintf("dapr-scheduler-server-1.dapr-scheduler-server.%s.svc", opts.Security.ControlPlaneNamespace()),
+		fmt.Sprintf("dapr-scheduler-server-2.dapr-scheduler-server.%s.svc", opts.Security.ControlPlaneNamespace()),
+	}
+}
+
+func defaultServerName(opts Options) string {
+	return fmt.Sprintf("%s.dapr-scheduler-server.%s.svc", opts.Name, opts.Security.ControlPlaneNamespace())
 }
 
 func peerURLs(initialCluster []string) (map[string]url.URL, error) {

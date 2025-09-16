@@ -38,17 +38,18 @@ const (
 )
 
 type Options struct {
-	ConfigName            string
-	Port                  int
-	ListenAddress         string
-	HealthzPort           int
-	HealthzListenAddress  string
-	IssuerCredentialsPath string
-	TrustDomain           string
-	Kubeconfig            string
-	Logger                logger.Options
-	Metrics               *metrics.FlagOptions
-	Mode                  string
+	ConfigName                 string
+	Port                       int
+	ListenAddress              string
+	HealthzPort                int
+	HealthzListenAddress       string
+	IssuerCredentialsPath      string
+	TrustDomain                string
+	Kubeconfig                 string
+	Logger                     logger.Options
+	Metrics                    *metrics.FlagOptions
+	Mode                       string
+	OverrideSchedulerHostnames []string
 
 	X509 X509Options
 	JWT  JWTOptions
@@ -143,6 +144,7 @@ func New(origArgs []string) *Options {
 	fs.StringVar(&opts.OIDC.jwksURI, "oidc-jwks-uri", "", "Custom URI where the JWKS can be accessed externally")
 	fs.StringVar(&opts.OIDC.pathPrefix, "oidc-path-prefix", "", "Path prefix to add to OIDC HTTP endpoints")
 	fs.StringSliceVar(&opts.OIDC.AllowedHosts, "oidc-allowed-hosts", nil, "List of allowed hosts for OIDC HTTP endpoints")
+	fs.StringSliceVar(&opts.OverrideSchedulerHostnames, "override-scheduler-hostnames", nil, "Use a custom list of scheduler hostnames that are allowed to verify")
 
 	if home := homedir.HomeDir(); home != "" {
 		fs.StringVar(&opts.Kubeconfig, "kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
